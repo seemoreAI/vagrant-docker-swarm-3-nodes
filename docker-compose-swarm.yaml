@@ -1,0 +1,35 @@
+services:
+  web:
+    image: seemoreai/bgapp-web:latest
+    ports:
+      - "8080:80"
+    deploy:
+      replicas: 3          # Ще разпредели 3 уеб контейнера по трите нода
+      update_config:
+        parallelism: 1
+        delay: 10s
+    networks:
+      - app-network
+
+  db:
+    image: seemoreai/bgapp-db:latest
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager # Базата данни ще стои сигурно на docker1
+    environment:
+      # Казваме на MariaDB да прочете root паролата от файла, подаден от Swarm Secret
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+    secrets:
+      - db_root_password
+    networks:
+      - app-network
+
+secrets:
+  db_root_password:
+    external: true         # Казваме, че тайната вече е създадена в Swarm чрез скрипта
+
+networks:
+  app-network:
+    driver: overlay        # Специалната Swarm мрежа между трите машини
