@@ -1,14 +1,16 @@
 #!/bin/bash
-# Взимаме името на текущата машина (docker2 или docker3) за лога
 HOSTNAME=$(hostname -s)
 
-echo "* Joining $HOSTNAME to the Swarm cluster ..."
+echo "=== Присъединяване на $HOSTNAME към Swarm клъстера ==="
 
-# Изчакваме мениджърът да запише токена в споделената папка
+# Изчакване на токена в споделената папка
 while [ ! -f /vagrant/worker_token.txt ]; do
   sleep 1
 done
 
-# Четем токена и се присъединяваме към мениджъра
+# Извличане на точното IP на текущия нод от частната мрежа
+MY_IP=$(hostname -I | awk '{print $2}')
+
+# Четене на токена и свързване
 TOKEN=$(cat /vagrant/worker_token.txt)
-docker swarm join --token $TOKEN 192.168.99.151:2377
+docker swarm join --token $TOKEN --advertise-addr $MY_IP 192.168.99.151:2377
